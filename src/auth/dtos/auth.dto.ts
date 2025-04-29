@@ -1,76 +1,32 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
 
-import { Transform } from 'class-transformer';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  MinLength,
-} from 'class-validator';
-import { toLowerCase, trim } from 'src/utils/helpers';
+const signinSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(8),
+});
 
-export class SigninDto {
-  @IsEmail()
-  @Transform(({ value }) => trim(value))
-  @Transform(({ value }) => toLowerCase(value))
-  @IsNotEmpty()
-  email: string;
+export class SigninDto extends createZodDto(signinSchema) {}
 
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-}
+const signupSchema = z.object({
+  firstName: z.string().trim().toLowerCase(),
+  lastName: z.string().trim().toLowerCase(),
+  email: z.string().trim().toLowerCase().email(),
+  password: z
+    .string()
+    .min(8)
+    .regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+      message: 'password too weak',
+    }),
+  phoneNumber: z.string().min(10),
+  address: z.string().trim().toLowerCase(),
+});
 
-export class SignupDto {
-  @IsString()
-  @Transform(({ value }) => trim(value))
-  @Transform(({ value }) => toLowerCase(value))
-  @IsNotEmpty()
-  firstName: string;
+export class SignupDto extends createZodDto(signupSchema) {}
 
-  @IsString()
-  @Transform(({ value }) => trim(value))
-  @Transform(({ value }) => toLowerCase(value))
-  @IsNotEmpty()
-  lastName: string;
+const signinResponseSchema = z.object({
+  refreshToken: z.string(),
+  accessToken: z.string(),
+});
 
-  @IsEmail()
-  @Transform(({ value }) => trim(value))
-  @Transform(({ value }) => toLowerCase(value))
-  @IsNotEmpty()
-  email: string;
-
-  @IsString()
-  @MinLength(8)
-  // @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-  //   message: 'password too weak',
-  // }) TODO: remove comment it later
-  password: string;
-
-  @IsString()
-  @IsNotEmpty()
-  phoneNumber: string;
-
-  @IsString()
-  @IsNotEmpty()
-  address: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  latitude: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  longitude: number;
-}
-
-export class SigninResponseDto {
-  @IsString()
-  @IsNotEmpty()
-  refreshToken: string;
-
-  @IsString()
-  @IsNotEmpty()
-  accessToken: string;
-}
+export class SigninResponseDto extends createZodDto(signinResponseSchema) {}

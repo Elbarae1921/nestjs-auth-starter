@@ -1,5 +1,13 @@
 # NestJS Auth starter template
 
+This starter uses Fastify as the HTTP server, but you can switch back to Express by just modifying the `main.ts` file.
+https://docs.nestjs.com/techniques/performance
+
+## Auth
+
+The template uses JWT access and refresh tokens with httpOnly cookies.
+It can be easily switched to use Bearer tokens by slightly modifying the strategies (check the comments in the strategies files). And then removing the cookie handling in the auth controller and the main.ts file.
+
 ## Getting it running
 
 1. Run the postgres and adminer containers:
@@ -16,7 +24,13 @@ or you can manage your own postgres instance.
 npm install
 ```
 
-3. Run the app:
+3. Run the migrations:
+
+```bash
+npm run prisma:migrate:dev
+```
+
+4. Run the app:
 
 ```bash
 npm run start:dev
