@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [uuidOssp(map: "uuid-ossp")]
+}
+
+enum role {
+  customer
+  business
+  admin
+}
+
+enum request_status {
+  ongoing
+  fulfilled
+  cancelled
+}
+
+enum offer_status {
+  pending
+  accepted
+  rejected
+  cancelled
+}
+
+model users {
+  id           String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email        String @unique
+  phone_number String @unique
+  first_name   String
+  last_name    String
+  role         role   @default(customer)
+
+  address   String
+  latitude  Float
+  longitude Float
+
+  refresh_token String?
+  password      String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  shops    shops?
+  reviews  reviews[]
+  requests requests[]
+}
+
+model shops {
+  id          String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title       String
+  description String
+  rating      Int    @default(0)
+  owner_id    String @unique @db.Uuid
+
+  address   String
+  latitude  Float
+  longitude Float
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  owner          users            @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  reviews        reviews[]
+  availabilities availabilities[]
+  menus          menus[]
+  galleries      galleries[]
+  offers         offers[]
+}
+
+model availabilities {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  shop_id     String   @db.Uuid
+  day_of_week Int      @db.SmallInt
+  open_time   DateTime @db.Time
+  close_time  DateTime @db.Time
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  shop shops @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+}
+
+model galleries {
+  id        String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  shop_id   String @db.Uuid
+  image_url String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  shop shops @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+}
+
+model services {
+  id          String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  label       String
+  is_default  Boolean @default(false)
+  is_optional Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  menus    menus[]
+  requests requests[]
+}
+
+model menus {
+  id         String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  service_id String @db.Uuid
+  shop_id    String @db.Uuid
+  price      Float
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  service services @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  shop    shops    @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+}
+
+model reviews {
+  id      String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  rating  Int
+  comment String
+  shop_id String @db.Uuid
+  user_id String @db.Uuid
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  shop shops @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model requests {
+  id      String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id String         @db.Uuid
+  gender  String         @db.Char(1)
+  time    DateTime       @db.Time
+  status  request_status @default(ongoing)
+  price   Float
+  note    String
+
+  address   String
+  latitude  Float
+  longitude Float
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user     users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  services services[]
+  offers   offers[]
+}
+
+model offers {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  request_id     String       @db.Uuid
+  shop_id        String       @db.Uuid
+  price          Float
+  status         offer_status @default(pending)
+  cancel_reason  String?
+  cancel_comment String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  request requests @relation(fields: [request_id], references: [id], onDelete: Cascade)
+  shop    shops    @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+}

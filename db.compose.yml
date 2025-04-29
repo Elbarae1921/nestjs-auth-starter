@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17.4
+    restart: always
+    container_name: db
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+    env_file: .env
+  
+  adminer:
+    image: adminer:5.2.1
+    restart: always
+    container_name: adminer
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+
+volumes:
+  db:
